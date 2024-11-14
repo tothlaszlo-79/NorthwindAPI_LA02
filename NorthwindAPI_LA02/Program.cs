@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using NorthwindAPI_LA02.Data;
+using Microsoft.OpenApi.Models;
+using NorthwindAPI.Auth;
+using NorthwindAPI_LA02.Extension;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +11,35 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Northwind API Demo", Version = "v1" });
+    c.AddSecurityDefinition("APIKey", new OpenApiSecurityScheme { 
+        In = ParameterLocation.Header,
+        Name = "X-Api-Key",
+        Type = SecuritySchemeType.ApiKey
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "APIKey"
+                }
+            },
+            new string [] { }
+        } });
+});
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = ApiKeyAuthenticationOptions.DefaultScheme;
+    options.DefaultChallengeScheme = ApiKeyAuthenticationOptions.DefaultScheme;
+})
+.ApiKeySupport(options => { options.ToString(); });
 
 ConfigurationManager configuration = builder.Configuration;
 
@@ -26,7 +57,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
