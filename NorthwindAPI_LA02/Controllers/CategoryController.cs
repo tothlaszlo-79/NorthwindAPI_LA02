@@ -57,5 +57,45 @@ namespace NorthwindAPI_LA02.Controllers
         {
             return Ok(_context.Products.Where(p => p.CategoryId == id));
         }
+
+        [HttpPost]
+        public IActionResult Create([FromBody] CreateCategoryRequest category)
+        {
+            //mapping
+            var originalCategory = new Category
+            {
+                CategoryId = category.CategoryId,
+                CategoryName = category.CategoryName,
+                Description = category.Description
+            };
+            _context.Categories.Add(originalCategory);
+            _context.SaveChanges();
+            return Created(string.Empty, null);
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Update(short id, [FromBody] UpdateCategoryRequest requested)
+        {
+            var _category = _context.Categories.SingleOrDefault(c => c.CategoryId == id);
+            if(_category == null) {  return NotFound(); }
+
+            _category.CategoryName = requested.CategoryName;
+            _category.Description = requested.Description;
+            _context.Update(_category);
+            _context.SaveChanges();
+            return Ok();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(short id) { 
+            var category = _context.Categories.SingleOrDefault( c=> c.CategoryId == id);
+            if (category == null)  return NotFound(); 
+
+            _context.Categories.Remove(category);
+            _context.SaveChanges();
+            return NoContent();
+        
+        }
+
     }
 }
